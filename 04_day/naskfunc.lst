@@ -7,16 +7,10 @@
      7                                  
      8                                  ; NASMではエラーが出るのでコメントアウト
      9                                  ;[FILE "naskfunc.nas]
-    10                                  	GLOBAL _io_hlt, _write_mem8 ; このプログラムに含まれる関数名
+    10                                  	GLOBAL _io_hlt ; このプログラムに含まれる関数名
     11                                  
     12                                  ; 以下は実際の関数
     13                                  [SECTION .text] ; オブジェクトファイルではこれを書いてからプログラムを書く
     14                                  _io_hlt: ; void io_hlt(void);
     15 00000000 F4                      	HLT
     16 00000001 C3                      	RET
-    17                                  
-    18                                  _write_mem8: ; void write_mem8(int addr, int data);
-    19 00000002 8B4C2404                	MOV	ECX,[ESP+4] ; [ESP+4]にaddrが入っているのでそれをECSに読み込む
-    20 00000006 8A442408                	MOV	AL,[ESP+8] ; [ESP+8]にdataが入っているのでそれをALに読み込む
-    21 0000000A 8801                    	MOV [ECX],AL
-    22 0000000C C3                      	RET

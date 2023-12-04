@@ -12,7 +12,7 @@ naskfunc.o: naskfunc.nas Makefile
 	nasm -f elf naskfunc.nas -o naskfunc.o -l naskfunc.lst
 
 bootpack.hrb: bootpack.c naskfunc.o os.lds Makefile
-	i386-elf-gcc -march=i486 -m32 -nostdlib -T os.lds bootpack.c naskfunc.o -o bootpack.hrb
+	i386-elf-gcc -march=i486 -m32 -nostdlib -T os.lds -g bootpack.c naskfunc.o -o bootpack.hrb
 
 haribote.sys: asmhead.bin bootpack.hrb Makefile
 	cat asmhead.bin bootpack.hrb > haribote.sys
