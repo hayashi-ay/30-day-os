@@ -52,7 +52,7 @@
     51 00000073 7310                    		JNC		next
     52 00000075 83C601                  		ADD		SI,1
     53 00000078 83FE05                  		CMP		SI,5
-    54 0000007B 7331                    		JAE		error ; SI >= 5 だったらerrorへ
+    54 0000007B 7335                    		JAE		error ; SI >= 5 だったらerrorへ
     55 0000007D B400                    		MOV		AH,0x00
     56 0000007F B200                    		MOV		DL,0x00
     57 00000081 CD13                    		INT		0x13 ; システムのリセット
@@ -74,35 +74,36 @@
     73 000000A3 80FD0A                  		CMP		CH,CYLS
     74 000000A6 72BD                    		JB		readloop ; CH < SYLSだったらreadloopへ
     75                                  
-    76 000000A8 E9(00C2)                		JMP		0xc200
-    77                                  
-    78                                  fin:
-    79 000000AB F4                      		HLT
-    80 000000AC EBFD                    		JMP		fin
-    81                                  
-    82                                  error:
-    83 000000AE BE[C300]                		MOV		SI,msg
-    84                                  
-    85                                  putloop:
-    86 000000B1 8A04                    		MOV		AL,[SI]
-    87 000000B3 83C601                  		ADD		SI,1
-    88 000000B6 3C00                    		CMP		AL,0
-    89 000000B8 74F1                    		JE		fin
-    90 000000BA B40E                    		MOV		AH,0x0e
-    91 000000BC BB0F00                  		MOV		BX,15
-    92 000000BF CD10                    		INT		0x10
-    93 000000C1 EBEE                    		JMP		putloop
-    94                                  
-    95                                  ; メッセージ部分
-    96                                  msg:
-    97 000000C3 0A0A                    		DB		0x0a, 0x0a
-    98 000000C5 6C6F6164206572726F-     		DB		"load error"
-    98 000000CE 72                 
-    99 000000CF 0A                      		DB		0x0a
-   100 000000D0 00                      		DB		0
-   101                                  		; RESB	0x7dfe-$ ではnasmだとエラーになる
-   102                                  		; $ - $$ : 現在位置からこのセクションの開始位置までのサイズ(使用済み容量) 
-   103                                  		; 0x1fe : ブートセクタの終わりアドレス(510バイト)
-   104                                  		; 0x1fe - ($ - $$) : 残りの容量
-   105 000000D1 00<rep 12Dh>            		TIMES 	0x1fe-($-$$) DB 0x00
-   106 000001FE 55AA                    		DB		0x55, 0xaa ; ブートセクタは「55 AA」で終わっている必要がある
+    76 000000A8 882EF00F                		MOV		[0x0ff0],CH ; 実は大事っぽい。これがないと画面が真っ白にならない
+    77 000000AC E9(00C2)                		JMP		0xc200
+    78                                  
+    79                                  fin:
+    80 000000AF F4                      		HLT
+    81 000000B0 EBFD                    		JMP		fin
+    82                                  
+    83                                  error:
+    84 000000B2 BE[C700]                		MOV		SI,msg
+    85                                  
+    86                                  putloop:
+    87 000000B5 8A04                    		MOV		AL,[SI]
+    88 000000B7 83C601                  		ADD		SI,1
+    89 000000BA 3C00                    		CMP		AL,0
+    90 000000BC 74F1                    		JE		fin
+    91 000000BE B40E                    		MOV		AH,0x0e
+    92 000000C0 BB0F00                  		MOV		BX,15
+    93 000000C3 CD10                    		INT		0x10
+    94 000000C5 EBEE                    		JMP		putloop
+    95                                  
+    96                                  ; メッセージ部分
+    97                                  msg:
+    98 000000C7 0A0A                    		DB		0x0a, 0x0a
+    99 000000C9 6C6F6164206572726F-     		DB		"load error"
+    99 000000D2 72                 
+   100 000000D3 0A                      		DB		0x0a
+   101 000000D4 00                      		DB		0
+   102                                  		; RESB	0x7dfe-$ ではnasmだとエラーになる
+   103                                  		; $ - $$ : 現在位置からこのセクションの開始位置までのサイズ(使用済み容量) 
+   104                                  		; 0x1fe : ブートセクタの終わりアドレス(510バイト)
+   105                                  		; 0x1fe - ($ - $$) : 残りの容量
+   106 000000D5 00<rep 129h>            		TIMES 	0x1fe-($-$$) DB 0x00
+   107 000001FE 55AA                    		DB		0x55, 0xaa ; ブートセクタは「55 AA」で終わっている必要がある

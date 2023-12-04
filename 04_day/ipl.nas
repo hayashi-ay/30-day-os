@@ -73,6 +73,7 @@ next:
 		CMP		CH,CYLS
 		JB		readloop ; CH < SYLSだったらreadloopへ
 
+		MOV		[0x0ff0],CH ; 実は大事っぽい。これがないと画面が真っ白にならない
 		JMP		0xc200
 
 fin:
