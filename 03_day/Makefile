@@ -8,8 +8,11 @@ ipl.bin: ipl.nas Makefile
 asmhead.bin: asmhead.nas Makefile
 	nasm asmhead.nas -o asmhead.bin -l asmhead.lst
 
-bootpack.hrb: bootpack.c os.lds Makefile
-	i386-elf-gcc -march=i486 -m32 -nostdlib -T os.lds bootpack.c -o bootpack.hrb
+naskfunc.o: naskfunc.nas Makefile
+	nasm -f elf naskfunc.nas -o naskfunc.o -l naskfunc.lst
+
+bootpack.hrb: bootpack.c naskfunc.o os.lds Makefile
+	i386-elf-gcc -march=i486 -m32 -nostdlib -T os.lds bootpack.c naskfunc.o -o bootpack.hrb
 
 haribote.sys: asmhead.bin bootpack.hrb Makefile
 	cat asmhead.bin bootpack.hrb > haribote.sys
@@ -20,3 +23,4 @@ run: haribote.img
 clean:
 	rm ipl.bin ipl.lst
 	rm asmhead.bin asmhead.lst
+	rm naskfunc.o
