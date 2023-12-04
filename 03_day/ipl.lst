@@ -1,7 +1,7 @@
-     1                                  ; hello-os
+     1                                  ; haribote-os
      2                                  ; TAB=4
      3                                  CYLS	EQU	10
-     4                                  		ORG 0x7c00
+     4                                  		ORG 0x7c00 ; 機械語がメモリのどこに読み込まれるかを指示
      5                                  
      6                                  ; FAT12フォーマットフロッピーディスクのための記述
      7 00000000 EB4E                    		JMP		entry
@@ -52,7 +52,7 @@
     51 00000073 7310                    		JNC		next
     52 00000075 83C601                  		ADD		SI,1
     53 00000078 83FE05                  		CMP		SI,5
-    54 0000007B 732E                    		JAE		error ; SI >= 5 だったらerrorへ
+    54 0000007B 7331                    		JAE		error ; SI >= 5 だったらerrorへ
     55 0000007D B400                    		MOV		AH,0x00
     56 0000007F B200                    		MOV		DL,0x00
     57 00000081 CD13                    		INT		0x13 ; システムのリセット
@@ -74,34 +74,35 @@
     73 000000A3 80FD0A                  		CMP		CH,CYLS
     74 000000A6 72BD                    		JB		readloop ; CH < SYLSだったらreadloopへ
     75                                  
-    76                                  
-    77                                  fin:
-    78 000000A8 F4                      		HLT
-    79 000000A9 EBFD                    		JMP		fin
-    80                                  
-    81                                  error:
-    82 000000AB BE[C000]                		MOV		SI,msg
-    83                                  
-    84                                  putloop:
-    85 000000AE 8A04                    		MOV		AL,[SI]
-    86 000000B0 83C601                  		ADD		SI,1
-    87 000000B3 3C00                    		CMP		AL,0
-    88 000000B5 74F1                    		JE		fin
-    89 000000B7 B40E                    		MOV		AH,0x0e
-    90 000000B9 BB0F00                  		MOV		BX,15
-    91 000000BC CD10                    		INT		0x10
-    92 000000BE EBEE                    		JMP		putloop
-    93                                  
-    94                                  ; メッセージ部分
-    95                                  msg:
-    96 000000C0 0A0A                    		DB		0x0a, 0x0a
-    97 000000C2 6C6F6164206572726F-     		DB		"load error"
-    97 000000CB 72                 
-    98 000000CC 0A                      		DB		0x0a
-    99 000000CD 00                      		DB		0
-   100                                  		; RESB	0x7dfe-$ ではnasmだとエラーになる
-   101                                  		; $ - $$ : 現在位置からこのセクションの開始位置までのサイズ(使用済み容量) 
-   102                                  		; 0x1fe : ブートセクタの終わりアドレス(510バイト)
-   103                                  		; 0x1fe - ($ - $$) : 残りの容量
-   104 000000CE 00<rep 130h>            		TIMES 	0x1fe-($-$$) DB 0x00
-   105 000001FE 55AA                    		DB		0x55, 0xaa ; ブートセクタは「55 AA」で終わっている必要がある
+    76 000000A8 E9(00C2)                		JMP		0xc200
+    77                                  
+    78                                  fin:
+    79 000000AB F4                      		HLT
+    80 000000AC EBFD                    		JMP		fin
+    81                                  
+    82                                  error:
+    83 000000AE BE[C300]                		MOV		SI,msg
+    84                                  
+    85                                  putloop:
+    86 000000B1 8A04                    		MOV		AL,[SI]
+    87 000000B3 83C601                  		ADD		SI,1
+    88 000000B6 3C00                    		CMP		AL,0
+    89 000000B8 74F1                    		JE		fin
+    90 000000BA B40E                    		MOV		AH,0x0e
+    91 000000BC BB0F00                  		MOV		BX,15
+    92 000000BF CD10                    		INT		0x10
+    93 000000C1 EBEE                    		JMP		putloop
+    94                                  
+    95                                  ; メッセージ部分
+    96                                  msg:
+    97 000000C3 0A0A                    		DB		0x0a, 0x0a
+    98 000000C5 6C6F6164206572726F-     		DB		"load error"
+    98 000000CE 72                 
+    99 000000CF 0A                      		DB		0x0a
+   100 000000D0 00                      		DB		0
+   101                                  		; RESB	0x7dfe-$ ではnasmだとエラーになる
+   102                                  		; $ - $$ : 現在位置からこのセクションの開始位置までのサイズ(使用済み容量) 
+   103                                  		; 0x1fe : ブートセクタの終わりアドレス(510バイト)
+   104                                  		; 0x1fe - ($ - $$) : 残りの容量
+   105 000000D1 00<rep 12Dh>            		TIMES 	0x1fe-($-$$) DB 0x00
+   106 000001FE 55AA                    		DB		0x55, 0xaa ; ブートセクタは「55 AA」で終わっている必要がある

@@ -1,7 +1,7 @@
-; hello-os
+; haribote-os
 ; TAB=4
 CYLS	EQU	10
-		ORG 0x7c00
+		ORG 0x7c00 ; 機械語がメモリのどこに読み込まれるかを指示
 
 ; FAT12フォーマットフロッピーディスクのための記述
 		JMP		entry
@@ -73,6 +73,7 @@ next:
 		CMP		CH,CYLS
 		JB		readloop ; CH < SYLSだったらreadloopへ
 
+		JMP		0xc200
 
 fin:
 		HLT
