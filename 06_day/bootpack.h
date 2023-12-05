@@ -23,6 +23,7 @@ void _asm_inthandler2c(void);
 // graphic.c
 void boxfill8(unsigned char *vram, int xsize, unsigned char c, int x0, int y0, int x1, int y1);
 void init_palette(void);
+void init_screen8(char *vram, int x, int y);
 void set_palette(int start, int end, unsigned char *rgb);
 void putfont8(char *vram, int xsize, int x, int y, char c, char *font);
 void putfont8_asc(char *vram, int xsize, int x, int y, char c, unsigned char *s);
