@@ -2,6 +2,7 @@
 #include "myfunc.h"
 
 extern struct FIFO8 keyinfo;
+extern struct FIFO8 mouseinfo;
 
 void enable_mouse(void);
 void init_keyboard(void);
@@ -11,13 +12,14 @@ void HariMain(void)
 	char *vram;
 	int xsize, ysize;
 	struct BOOTINFO *binfo = (struct BOOTINFO *) ADR_BOOTINFO;
-	char s[40], mcursor[256], keybuf[32];
+	char s[40], mcursor[256], keybuf[32], mousebuf[128];
 	int mx, my, i;
 
 	init_gdtidt();
 	init_pic();
 	_io_sti(); // IDT/PICの初期化が終わったのでCPUの割込み禁止を解除
 	fifo8_init(&keyinfo, 32, keybuf);
+	fifo8_init(&mouseinfo, 128, mousebuf);
 	_io_out8(PIC0_IMR, 0xf9); /* PIC1とキーボードを許可(11111001) */
 	_io_out8(PIC1_IMR, 0xef); /* マウスを許可(11101111) */
 
@@ -33,19 +35,24 @@ void HariMain(void)
 
 	enable_mouse();
 
-	int count = 0;
-
 	for (;;) {
 		_io_cli(); // 割り込み禁止
-		if (fifo8_status(&keyinfo) == 0) {
+		if (fifo8_status(&keyinfo) == 0 && fifo8_status(&mouseinfo) == 0) {
 			_io_stihlt();
 		} else {
-			i = fifo8_get(&keyinfo);
-			_io_sti();
-			sprintf(s, "%x", i);
-			boxfill8(binfo->vram, binfo->scrnx, COL8_000000, 0 + count * 16, 16, 15 + count * 16, 31);
-			putfont8_asc(binfo->vram, binfo->scrnx, 0 + count * 16, 16, COL8_FFFFFF, s);
-			count += 1;
+			if (fifo8_status(&keyinfo) != 0) {
+				i = fifo8_get(&keyinfo);
+				_io_sti();
+				sprintf(s, "%x", i);
+				boxfill8(binfo->vram, binfo->scrnx, COL8_000000, 0, 16, 15, 31);
+				putfont8_asc(binfo->vram, binfo->scrnx, 0, 16, COL8_FFFFFF, s);
+			} else if (fifo8_status(&mouseinfo) != 0) {
+				i = fifo8_get(&mouseinfo);
+				_io_sti();
+				sprintf(s, "%x", i);
+				boxfill8(binfo->vram, binfo->scrnx, COL8_000000, 32, 16, 47, 31);
+				putfont8_asc(binfo->vram, binfo->scrnx, 32, 16, COL8_FFFFFF, s);
+			}
 		}
 	}
 }

@@ -28,6 +28,7 @@ void init_pic(void)
 #define PORT_KEYDAT		0x0060
 
 struct FIFO8 keyinfo;
+struct FIFO8 mouseinfo;
 
 void _inthandler21(int *esp)
 /* PS/2キーボードからの割り込み */
@@ -43,12 +44,13 @@ void _inthandler21(int *esp)
 void _inthandler2c(int *esp)
 /* PS/2マウスからの割り込み */
 {
-	struct BOOTINFO *binfo = (struct BOOTINFO *) ADR_BOOTINFO;
-	boxfill8(binfo->vram, binfo->scrnx, COL8_000000, 0, 16, 32 * 8 - 1, 31);
-	putfont8_asc(binfo->vram, binfo->scrnx, 0, 16, COL8_FFFFFF, "INT 2C (IRQ-12) : PS/2 mouse");
-	for (;;) {
-		_io_hlt();
-	}
+	unsigned char data;
+
+	_io_out8(PIC1_OCW2, 0x64); // IRQ-12受付完了をPIC1（スレーブ）に通知
+	_io_out8(PIC0_OCW2, 0x62); // IRQ-02受付完了をPIC0（マスタ）に通知
+	data = _io_in8(PORT_KEYDAT);
+	fifo8_put(&mouseinfo, data);
+	return;
 }
 
 void _inthandler27(int *esp)
