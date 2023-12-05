@@ -1,13 +1,15 @@
 #include "bootpack.h"
 #include "myfunc.h"
 
+extern struct KEYBUF keybuf;
+
 void HariMain(void)
 {
 	char *vram;
 	int xsize, ysize;
 	struct BOOTINFO *binfo = (struct BOOTINFO *) ADR_BOOTINFO;
 	char s[40], mcursor[256];
-	int mx, my;
+	int mx, my, i;
 
 	init_gdtidt();
 	init_pic();
@@ -25,6 +27,16 @@ void HariMain(void)
 	_io_out8(PIC1_IMR, 0xef); /* マウスを許可(11101111) */
 
 	for (;;) {
-		_io_hlt();
+		_io_cli(); // 割り込み禁止
+		if (keybuf.flag == 0) {
+			_io_stihlt();
+		} else {
+			i = keybuf.data;
+			keybuf.flag = 0;
+			_io_sti();
+			sprintf(s, "%x", i);
+			boxfill8(binfo->vram, binfo->scrnx, COL8_000000, 0, 16, 15, 31);
+			putfont8_asc(binfo->vram, binfo->scrnx, 0, 16, COL8_FFFFFF, s);
+		}
 	}
 }
