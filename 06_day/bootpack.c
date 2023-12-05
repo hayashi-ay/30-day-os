@@ -10,6 +10,9 @@ void HariMain(void)
 	int mx, my;
 
 	init_gdtidt();
+	init_pic();
+	_io_sti(); // IDT/PICの初期化が終わったのでCPUの割込み禁止を解除
+
 	init_palette();
 	binfo = (struct BOOTINFO *)0x0ff0;
 
@@ -40,13 +43,8 @@ void HariMain(void)
 	init_mouse_cursor8(mcursor, COL8_008484);
 	putblock8_8(binfo->vram, binfo->scrnx, 16, 16, mx, my, mcursor, 16);
 
-	putfont8_asc(binfo->vram, binfo->scrnx, 8, 16, COL8_FFFFFF, "ABC 1234");
-	putfont8_asc(binfo->vram, binfo->scrnx, 31, 39, COL8_000000, "Haribote OS.");
-	putfont8_asc(binfo->vram, binfo->scrnx, 30, 38, COL8_FFFFFF, "Haribote OS.");
-
-	sprintf(s, "scrnx = %d", binfo->scrnx);
-	putfont8_asc(binfo->vram, binfo->scrnx, 16, 80, COL8_FFFFFF, s);
-
+	_io_out8(PIC0_IMR, 0xf9); /* PIC1とキーボードを許可(11111001) */
+	_io_out8(PIC1_IMR, 0xef); /* マウスを許可(11101111) */
 
 	for (;;) {
 		_io_hlt();
