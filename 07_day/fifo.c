@@ -29,7 +29,7 @@ int fifo8_put(struct FIFO8 *fifo, unsigned char data)
 int fifo8_get(struct FIFO8 *fifo)
 {
 	int data;
-	if (fifo->free = fifo->size)
+	if (fifo->free == fifo->size)
 	{
 		// バッファがないときを-1を返す
 		return -1;

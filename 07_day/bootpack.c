@@ -28,6 +28,8 @@ void HariMain(void)
 
 	fifo8_init(&keyinfo, 32, keybuf);
 
+	int count = 0;
+
 	for (;;) {
 		_io_cli(); // 割り込み禁止
 		if (fifo8_status(&keyinfo) == 0) {
@@ -36,8 +38,9 @@ void HariMain(void)
 			i = fifo8_get(&keyinfo);
 			_io_sti();
 			sprintf(s, "%x", i);
-			boxfill8(binfo->vram, binfo->scrnx, COL8_000000, 0, 16, 15, 31);
-			putfont8_asc(binfo->vram, binfo->scrnx, 0, 16, COL8_FFFFFF, s);
+			boxfill8(binfo->vram, binfo->scrnx, COL8_000000, 0 + count * 16, 16, 15, 31);
+			putfont8_asc(binfo->vram, binfo->scrnx, 0 + count * 16, 16, COL8_FFFFFF, s);
+			count += 1;
 		}
 	}
 }
