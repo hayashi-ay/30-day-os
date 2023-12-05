@@ -27,7 +27,7 @@ void init_pic(void)
 
 #define PORT_KEYDAT		0x0060
 
-struct KEYBUF keybuf;
+struct FIFO8 keyinfo;
 
 void _inthandler21(int *esp)
 /* PS/2キーボードからの割り込み */
@@ -37,11 +37,7 @@ void _inthandler21(int *esp)
 
 	_io_out8(PIC0_OCW2, 0x61); // IRQ-1受付完了をPICに通知
 	data = _io_in8(PORT_KEYDAT);
-
-	if (keybuf.flag == 0) {
-		keybuf.data = data;
-		keybuf.flag = 1;
-	}
+	fifo8_put(&keyinfo, data);
 	return;
 }
 
