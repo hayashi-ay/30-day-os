@@ -3,7 +3,7 @@ ZTOOL = ../z_tools_osx
 OBJS = naskfunc.o hankaku.o
 CFILES = bootpack.c myfunc.c graphic.c dsctbl.c int.c
 
-haribote.img: ipl.bin  haribote.sys Makefile
+haribote.img: ipl.bin  haribote.sys Makefile $(OBJS) $(CFILES)
 	mformat -f 1440 -C -B ipl.bin -i haribote.img ::
 	mcopy -i haribote.img haribote.sys ::
 

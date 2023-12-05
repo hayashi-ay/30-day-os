@@ -12,6 +12,7 @@ void _io_cli(void);
 void _io_sti(void);
 void _io_stihlt(void);
 void _io_out8(int port, int data);
+int _io_in8(int port);
 int _io_load_eflags(void);
 void _io_store_eflags(int eflags);
 void _load_gdtr(int limit, int addr);
