@@ -166,12 +166,12 @@ int mouse_decode(struct MOUSE_DEC *mdec, unsigned char dat)
 		mdec->x = mdec->buf[1];
 		mdec->y = mdec->buf[2];
 		// x方向がマイナスの値なので、符号拡張
-		if (mdec->buf[0] & 0x10 != 0) {
+		if ((mdec->buf[0] & 0x10) != 0) {
 			mdec->x |= 0xffffff00;
 		}
 
 		// yについて
-		if (mdec->buf[1] & 0x20 != 0) {
+		if ((mdec->buf[0] & 0x20) != 0) {
 			mdec->y |= 0xffffff00;
 		}
 
