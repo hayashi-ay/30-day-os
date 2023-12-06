@@ -4,7 +4,14 @@
 extern struct FIFO8 keyinfo;
 extern struct FIFO8 mouseinfo;
 
-void enable_mouse(void);
+struct MOUSE_DEC
+{
+	unsigned char buf[3], phase;
+	int x, y, btn;
+};
+
+void enable_mouse(struct MOUSE_DEC *mdec);
+int mouse_decode(struct MOUSE_DEC *mdec, unsigned char dat);
 void init_keyboard(void);
 
 void HariMain(void)
@@ -14,7 +21,7 @@ void HariMain(void)
 	struct BOOTINFO *binfo = (struct BOOTINFO *)ADR_BOOTINFO;
 	char s[40], mcursor[256], keybuf[32], mousebuf[128];
 	int mx, my, i;
-	unsigned char mouse_dbuf[3], mouse_phase;
+	struct MOUSE_DEC mdec;
 
 	init_gdtidt();
 	init_pic();
@@ -34,8 +41,7 @@ void HariMain(void)
 	init_mouse_cursor8(mcursor, COL8_008484);
 	putblock8_8(binfo->vram, binfo->scrnx, 16, 16, mx, my, mcursor, 16);
 
-	enable_mouse();
-	mouse_phase = 0; // マウスの0xfaを待っているフェーズ
+	enable_mouse(&mdec);
 
 	for (;;)
 	{
@@ -58,29 +64,30 @@ void HariMain(void)
 			{
 				i = fifo8_get(&mouseinfo);
 				_io_sti();
-				if (mouse_phase == 0 && i == 0xfa)
+				if (mouse_decode(&mdec, i) == 1)
 				{
-					mouse_phase = 1;
+					sprintf(s, "%x %x %x", mdec.x, mdec.y, mdec.btn);
+					boxfill8(binfo->vram, binfo->scrnx, COL8_000000, 32, 16, 32 + 8 * 8 - 1, 31);
+					putfont8_asc(binfo->vram, binfo->scrnx, 32, 16, COL8_FFFFFF, s);
+
+					/* マウスカーソルの移動 */
+					boxfill8(binfo->vram, binfo->scrnx, COL8_008484, mx, my, mx + 15, my + 15); /* マウス消す */
+					mx += mdec.x;
+					my += mdec.y;
+					if (mx < 0) {
+						mx = 0;
+					}
+					if (my < 0) {
+						my = 0;
+					}
+					if (mx > binfo->scrnx - 16) {
+						mx = binfo->scrnx - 16;
+					}
+					if (my > binfo->scrny - 16) {
+						my = binfo->scrny - 16;
+					}
+					putblock8_8(binfo->vram, binfo->scrnx, 16, 16, mx, my, mcursor, 16); /* マウス描く */
 				}
-				else if (mouse_phase == 1)
-				{
-					mouse_dbuf[0] = i;
-					mouse_phase = 2;
-				}
-				else if (mouse_phase == 2)
-				{
-					mouse_dbuf[1] = i;
-					mouse_phase = 3;
-				}
-				else if (mouse_phase == 3)
-				{
-					mouse_dbuf[2] = i;
-					mouse_phase = 1;
-					// 3バイトが揃ったので表示する
-				}
-				sprintf(s, "%x %x %x", mouse_dbuf[0], mouse_dbuf[1], mouse_dbuf[2]);
-				boxfill8(binfo->vram, binfo->scrnx, COL8_000000, 32, 16, 32 + 8 * 8 - 1, 31);
-				putfont8_asc(binfo->vram, binfo->scrnx, 32, 16, COL8_FFFFFF, s);
 			}
 		}
 	}
@@ -119,12 +126,58 @@ void init_keyboard(void)
 #define KEYCMD_SENDTO_MOUSE 0xd4
 #define MOUSECMD_ENABLE 0xf4
 
-void enable_mouse(void)
+void enable_mouse(struct MOUSE_DEC *mdec)
 {
 	/* マウス有効 */
 	wait_KBC_sendready();
 	_io_out8(PORT_KEYCMD, KEYCMD_SENDTO_MOUSE);
 	wait_KBC_sendready();
 	_io_out8(PORT_KEYDAT, MOUSECMD_ENABLE);
-	return; /* うまくいくとACK(0xfa)が送信されてくる */
+	mdec->phase = 0; // マウスの0xfaを待っているフェーズ
+	return;			 /* うまくいくとACK(0xfa)が送信されてくる */
+}
+
+int mouse_decode(struct MOUSE_DEC *mdec, unsigned char dat)
+{
+	if (mdec->phase == 0 && dat == 0xfa)
+	{
+		mdec->phase = 1;
+		return 0;
+	}
+	else if (mdec->phase == 1)
+	{
+		mdec->buf[0] = dat;
+		mdec->phase = 2;
+		return 0;
+	}
+	else if (mdec->phase == 2)
+	{
+		mdec->buf[1] = dat;
+		mdec->phase = 3;
+		return 0;
+	}
+	else if (mdec->phase == 3)
+	{
+		// 3バイトが揃った
+		mdec->buf[2] = dat;
+		mdec->phase = 1;
+		// 下位3ビットがボタンの状態を表す
+		mdec->btn = mdec->buf[0] & 0x07;
+		mdec->x = mdec->buf[1];
+		mdec->y = mdec->buf[2];
+		// x方向がマイナスの値なので、符号拡張
+		if (mdec->buf[0] & 0x10 != 0) {
+			mdec->x |= 0xffffff00;
+		}
+
+		// yについて
+		if (mdec->buf[1] & 0x20 != 0) {
+			mdec->y |= 0xffffff00;
+		}
+
+		// yは画面上の値とマウスの値が逆
+		mdec->y = - mdec->y;
+
+		return 1;
+	}
 }
