@@ -23,7 +23,7 @@ void HariMain(void)
 	int mx, my, i;
 	struct MOUSE_DEC mdec;
 	unsigned int memtotal;
-	struct MEMMAN *memman = (struct MEMMAN *) MEMMAN_ADDR;
+	struct MEMMAN *memman = (struct MEMMAN *)MEMMAN_ADDR;
 	struct SHTCTL *shtctl;
 	struct SHEET *sht_back, *sht_mouse;
 	unsigned char *buf_back, buf_mouse[256];
@@ -95,22 +95,15 @@ void HariMain(void)
 					/* マウスカーソルの移動 */
 					mx += mdec.x;
 					my += mdec.y;
-					if (mx < 0)
-					{
-						mx = 0;
-					}
+					// なんか本と値が異なる
+					if (mx < -15)
+						mx = -15;
 					if (my < 0)
-					{
 						my = 0;
-					}
-					if (mx > binfo->scrnx - 16)
-					{
-						mx = binfo->scrnx - 16;
-					}
-					if (my > binfo->scrny - 16)
-					{
-						my = binfo->scrny - 16;
-					}
+					if (mx > binfo->scrnx - 1)
+						mx = binfo->scrnx - 1;
+					if (my > binfo->scrny - 1)
+						my = binfo->scrny - 1;
 					sheet_slide(shtctl, sht_mouse, mx, my);
 				}
 			}
