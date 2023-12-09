@@ -53,15 +53,15 @@ void HariMain(void)
 	sheet_setbuf(sht_mouse, buf_mouse, 16, 16, COL8_008484);
 	init_screen8(buf_back, binfo->scrnx, binfo->scrny);
 	init_mouse_cursor8(buf_mouse, COL8_008484);
-	sheet_slide(shtctl, sht_back, 0, 0);
+	sheet_slide(sht_back, 0, 0);
 	mx = (binfo->scrnx - 16) / 2; // 画面中央になるように座標計算
 	my = (binfo->scrny - 28 - 16) / 2;
-	sheet_slide(shtctl, sht_mouse, mx, my);
-	sheet_updown(shtctl, sht_back, 0);
-	sheet_updown(shtctl, sht_mouse, 1);
+	sheet_slide(sht_mouse, mx, my);
+	sheet_updown(sht_back, 0);
+	sheet_updown(sht_mouse, 1);
 	sprintf(s, "memory %dMB free: %dKB", memtotal / (1024 * 1024), memman_total(memman) / 1024);
 	putfont8_asc(buf_back, binfo->scrnx, 0, 32, COL8_FFFFFF, s);
-	sheet_refresh(shtctl, sht_back, 0, 0, binfo->scrnx, binfo->scrny);
+	sheet_refresh(sht_back, 0, 0, binfo->scrnx, binfo->scrny);
 
 	for (;;)
 	{
@@ -79,7 +79,7 @@ void HariMain(void)
 				sprintf(s, "%x", i);
 				boxfill8(buf_back, binfo->scrnx, COL8_000000, 0, 16, 15, 31);
 				putfont8_asc(buf_back, binfo->scrnx, 0, 16, COL8_FFFFFF, s);
-				sheet_refresh(shtctl, sht_back, 0, 16, 16, 32);
+				sheet_refresh(sht_back, 0, 16, 16, 32);
 			}
 			else if (fifo8_status(&mouseinfo) != 0)
 			{
@@ -90,7 +90,7 @@ void HariMain(void)
 					sprintf(s, "%x %x %x", mdec.x, mdec.y, mdec.btn);
 					boxfill8(buf_back, binfo->scrnx, COL8_000000, 32, 16, 32 + 8 * 8 - 1, 31);
 					putfont8_asc(buf_back, binfo->scrnx, 32, 16, COL8_FFFFFF, s);
-					sheet_refresh(shtctl, sht_back, 32, 16, 32 + 15 * 8, 32);
+					sheet_refresh(sht_back, 32, 16, 32 + 15 * 8, 32);
 
 					/* マウスカーソルの移動 */
 					mx += mdec.x;
@@ -104,7 +104,7 @@ void HariMain(void)
 						mx = binfo->scrnx - 1;
 					if (my > binfo->scrny - 1)
 						my = binfo->scrny - 1;
-					sheet_slide(shtctl, sht_mouse, mx, my);
+					sheet_slide(sht_mouse, mx, my);
 				}
 			}
 		}
