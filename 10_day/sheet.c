@@ -60,6 +60,9 @@ void sheet_updown(struct SHTCTL *ctl, struct SHEET *sht, int height)
 	{
 		height = -1;
 	}
+	sht->height = height;
+
+
 	if (old > height)
 	{ // 短くなる
 		if (height >= 0)
@@ -129,7 +132,7 @@ void sheet_refresh(struct SHTCTL *ctl)
 				c = buf[by * sht->bxsize + bx];
 				if (c != sht->col_inv)
 				{
-					vram[by * ctl->xsize + vx] = c;
+					vram[vy * ctl->xsize + vx] = c;
 				}
 			}
 		}
