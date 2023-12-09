@@ -29,7 +29,7 @@ haribote.sys: asmhead.bin bootpack.hrb Makefile
 	cat asmhead.bin bootpack.hrb > haribote.sys
 
 run: haribote.img
-	qemu-system-i386 -drive file=haribote.img,if=floppy,format=raw -boot a
+	qemu-system-i386 -m 32M -drive file=haribote.img,if=floppy,format=raw -boot a
 
 clean:
 	rm ipl.bin ipl.lst
