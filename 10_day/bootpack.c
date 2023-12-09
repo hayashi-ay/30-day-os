@@ -14,12 +14,6 @@ void enable_mouse(struct MOUSE_DEC *mdec);
 int mouse_decode(struct MOUSE_DEC *mdec, unsigned char dat);
 void init_keyboard(void);
 
-#define EFLAGS_AC_BIT 0x00040000
-#define CR0_CACHE_DISABLE 0x60000000
-
-unsigned int memtest(unsigned int start, unsigned int end);
-unsigned int memtest_sub(unsigned int start, unsigned int end);
-
 void HariMain(void)
 {
 	char *vram;
@@ -125,69 +119,6 @@ void HariMain(void)
 			}
 		}
 	}
-}
-
-unsigned int memtest(unsigned int start, unsigned int end)
-{
-	char flag486 = 0; // 486アーキテクチャかどうか。486の場合はキャッシュ機構があるのでOFFにする
-	unsigned int eflag, cr0, i;
-
-	eflag = _io_load_eflags();
-	eflag |= EFLAGS_AC_BIT; // ACビットを1にする
-	_io_store_eflags(eflag);
-	eflag = _io_load_eflags();
-	// 386ではACフラグを1にしても0に戻るのでそこで判別
-	if ((eflag & EFLAGS_AC_BIT) != 0)
-	{
-		flag486 = 1;
-	}
-	eflag &= ~EFLAGS_AC_BIT; // ACビットを0に戻す
-	_io_store_eflags(eflag);
-
-	// 486以降ならキャッシュ無効か
-	if (flag486 == 1)
-	{
-		cr0 = _load_cr0();
-		cr0 |= CR0_CACHE_DISABLE;
-		_store_cr0(cr0);
-	}
-
-	i = memtest_sub(start, end);
-
-	// キャッシュの無効化を戻す
-	if (flag486 == 1)
-	{
-		cr0 = _load_cr0();
-		cr0 &= ~CR0_CACHE_DISABLE;
-		_store_cr0(cr0);
-	}
-
-	return i;
-}
-
-unsigned int memtest_sub(unsigned int start, unsigned int end)
-{
-	unsigned int i, *p, old, pat0 = 0xaa55aa55, pat1 = 0x55aa55aa;
-	for (i = start; i <= end; i += 0x1000)
-	{
-		p = (unsigned int *)(i + 0xffc);
-		old = *p;
-		*p = pat0;
-		*p ^= 0xffffffff;
-		if (*p != pat1)
-		{
-		not_memory:
-			*p = old;
-			break;
-		}
-		*p ^= 0xffffffff;
-		if (*p != pat0)
-		{
-			goto not_memory;
-		}
-		*p = old;
-	}
-	return i;
 }
 
 #define PORT_KEYDAT 0x0060
