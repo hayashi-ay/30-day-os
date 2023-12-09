@@ -188,14 +188,15 @@ int memman_free(struct MEMMAN *man, unsigned int addr, unsigned int size)
 unsigned int memman_alloc_4k(struct MEMMAN *man, unsigned int size)
 {
 	unsigned int address;
-	size = (size + 0xfff) & 0xffff0000; // 切り上げ
+	size = (size + 0xfff) & 0xfffff000; // 切り上げ
 	address = memman_alloc(man, size);
+	return address;
 }
 
 int memman_free_4k(struct MEMMAN *man, unsigned int addr, unsigned int size)
 {
 	int i;
-	size = (size + 0xfff) & 0xffff0000;
+	size = (size + 0xfff) & 0xfffff000;
 	i = memman_free(man, addr, size);
 	return i;
 }
