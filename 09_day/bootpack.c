@@ -14,6 +14,12 @@ void enable_mouse(struct MOUSE_DEC *mdec);
 int mouse_decode(struct MOUSE_DEC *mdec, unsigned char dat);
 void init_keyboard(void);
 
+#define EFLAGS_AC_BIT 0x00040000
+#define CR0_CACHE_DISABLE 0x60000000
+
+unsigned int memtest(unsigned int start, unsigned int end);
+unsigned int memtest_sub(unsigned int start, unsigned int end);
+
 void HariMain(void)
 {
 	char *vram;
@@ -42,6 +48,10 @@ void HariMain(void)
 	putblock8_8(binfo->vram, binfo->scrnx, 16, 16, mx, my, mcursor, 16);
 
 	enable_mouse(&mdec);
+
+	i = memtest(0x00400000, 0xbfffffff) / (1024 * 1024);
+	sprintf(s, "memory %dMB", i);
+	putfont8_asc(binfo->vram, binfo->scrnx, 0, 32, COL8_FFFFFF, s);
 
 	for (;;)
 	{
@@ -74,16 +84,20 @@ void HariMain(void)
 					boxfill8(binfo->vram, binfo->scrnx, COL8_008484, mx, my, mx + 15, my + 15); /* マウス消す */
 					mx += mdec.x;
 					my += mdec.y;
-					if (mx < 0) {
+					if (mx < 0)
+					{
 						mx = 0;
 					}
-					if (my < 0) {
+					if (my < 0)
+					{
 						my = 0;
 					}
-					if (mx > binfo->scrnx - 16) {
+					if (mx > binfo->scrnx - 16)
+					{
 						mx = binfo->scrnx - 16;
 					}
-					if (my > binfo->scrny - 16) {
+					if (my > binfo->scrny - 16)
+					{
 						my = binfo->scrny - 16;
 					}
 					putblock8_8(binfo->vram, binfo->scrnx, 16, 16, mx, my, mcursor, 16); /* マウス描く */
@@ -91,6 +105,69 @@ void HariMain(void)
 			}
 		}
 	}
+}
+
+unsigned int memtest(unsigned int start, unsigned int end)
+{
+	char flag486 = 0; // 486アーキテクチャかどうか。486の場合はキャッシュ機構があるのでOFFにする
+	unsigned int eflag, cr0, i;
+
+	eflag = _io_load_eflags();
+	eflag |= EFLAGS_AC_BIT; // ACビットを1にする
+	_io_store_eflags(eflag);
+	eflag = _io_load_eflags();
+	// 386ではACフラグを1にしても0に戻るのでそこで判別
+	if ((eflag & EFLAGS_AC_BIT) != 0)
+	{
+		flag486 = 1;
+	}
+	eflag &= ~EFLAGS_AC_BIT; // ACビットを0に戻す
+	_io_store_eflags(eflag);
+
+	// 486以降ならキャッシュ無効か
+	if (flag486 == 1)
+	{
+		cr0 = _load_cr0();
+		cr0 |= CR0_CACHE_DISABLE;
+		_store_cr0(cr0);
+	}
+
+	i = memtest_sub(start, end);
+
+	// キャッシュの無効化を戻す
+	if (flag486 == 1)
+	{
+		cr0 = _load_cr0();
+		cr0 &= ~CR0_CACHE_DISABLE;
+		_store_cr0(cr0);
+	}
+
+	return i;
+}
+
+unsigned int memtest_sub(unsigned int start, unsigned int end)
+{
+	unsigned int i, *p, old, pat0 = 0xaa55aa55, pat1 = 0x55aa55aa;
+	for (i = start; i <= end; i += 0x1000)
+	{
+		p = (unsigned int *)(i + 0xffc);
+		old = *p;
+		*p = pat0;
+		*p ^= 0xffffffff;
+		if (*p != pat1)
+		{
+		not_memory:
+			*p = old;
+			break;
+		}
+		*p ^= 0xffffffff;
+		if (*p != pat0)
+		{
+			goto not_memory;
+		}
+		*p = old;
+	}
+	return i;
 }
 
 #define PORT_KEYDAT 0x0060
@@ -166,17 +243,19 @@ int mouse_decode(struct MOUSE_DEC *mdec, unsigned char dat)
 		mdec->x = mdec->buf[1];
 		mdec->y = mdec->buf[2];
 		// x方向がマイナスの値なので、符号拡張
-		if ((mdec->buf[0] & 0x10) != 0) {
+		if ((mdec->buf[0] & 0x10) != 0)
+		{
 			mdec->x |= 0xffffff00;
 		}
 
 		// yについて
-		if ((mdec->buf[0] & 0x20) != 0) {
+		if ((mdec->buf[0] & 0x20) != 0)
+		{
 			mdec->y |= 0xffffff00;
 		}
 
 		// yは画面上の値とマウスの値が逆
-		mdec->y = - mdec->y;
+		mdec->y = -mdec->y;
 
 		return 1;
 	}

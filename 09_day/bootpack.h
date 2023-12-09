@@ -15,6 +15,8 @@ void _io_out8(int port, int data);
 int _io_in8(int port);
 int _io_load_eflags(void);
 void _io_store_eflags(int eflags);
+int _load_cr0(void);
+void _store_cr0(int cr0);
 void _load_gdtr(int limit, int addr);
 void _load_idtr(int limit, int addr);
 void _asm_inthandler21(void);
